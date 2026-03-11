@@ -3,7 +3,6 @@ import re
 
 class DataSanitizer:
     def __init__(self):
-        # Rules defined as a dictionary of functions
         self.rules = {
             "email": self._clean_email,
             "phone": self._clean_phone,
@@ -14,6 +13,7 @@ class DataSanitizer:
             "email": lambda v: "@" in v and "." in v.split("@")[-1],
             "phone": lambda v: len(v) >= 10,
             "username": lambda v: len(v) >= 3 and v.isalnum(),
+            "age": lambda v: isinstance(v, int) and v >= 0  # fixed
         }
 
     def _clean_text(self, text):
@@ -35,16 +35,15 @@ class DataSanitizer:
         """Parses and reformats a date string."""
         if not isinstance(date_str, str):
             return None
-        try:                                              
+        try:
             date_obj = datetime.strptime(date_str.strip(), "%d-%m-%Y")
             return date_obj.strftime("%d, %B, %Y")
-        except ValueError:                               
+        except ValueError:
             return None
 
-    def sanitize_record(self, data_dict):
+    def sanitize_record(self, data_dict):  # fixed indentation throughout
         clean_data = {}
         errors = []
-
         for key, value in data_dict.items():
             if key in self.rules:
                 cleaned_value = self.rules[key](value)
@@ -54,11 +53,10 @@ class DataSanitizer:
                     clean_data[key] = cleaned_value
             else:
                 clean_data[key] = value
+                cleaned_value = value
             if key in self.validators and not self.validators[key](cleaned_value):
                 errors.append(f"Validation failed for field: {key}")
-
         return clean_data, errors
-
 
 # --- HOW TO USE IT ---
 raw_input = {
@@ -71,12 +69,5 @@ raw_input = {
 
 sanitizer = DataSanitizer()
 clean_result, issues = sanitizer.sanitize_record(raw_input)
-
 print(f"Cleaned Data: {clean_result}")
 print(f"Issues Found: {issues}")
-```
-
-**Expected output:**
-```
-Cleaned Data: {'username': 'JohnDoe123', 'email': 'john.doe@example.com', 'phone': '15551234567', 'age': 25, 'dob': '10, February, 2003'}
-Issues Found: []
